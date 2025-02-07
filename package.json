@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "setup-db": "ts-node scripts/setup-db.ts",
+    "setup-db": "ts-node --project tsconfig.json scripts/setup-db.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate": "ts-node --project tsconfig.json src/scripts/run-migrations.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -38,7 +39,6 @@
     "@types/react": "^18.2.52",
     "@types/react-dom": "^18.2.18",
     "dotenv": "^16.4.7",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.3.3"
   }
 }

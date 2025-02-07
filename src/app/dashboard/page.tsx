@@ -1,12 +1,50 @@
+'use client';
+import { useEffect, useState } from 'react';
+import { Post } from '@/lib/db/types';
+
 export default function DashboardPage() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const response = await fetch('/api/posts');
+        const data = await response.json();
+        if (data.success) {
+          setPosts(data.posts);
+        }
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  if (isLoading) {
+    return <div>Loading posts...</div>;
+  }
+
   return (
-    <main className="min-h-screen p-8 bg-gray-50">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Welcome to College Social Connect
-        </h1>
-        <p>Dashboard content coming soon...</p>
-      </div>
-    </main>
+    <div className="space-y-6">
+      {posts.map((post) => (
+        <div key={post._id} className="bg-white shadow rounded-lg p-6">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-gray-900">
+                {post.author_id}
+              </h3>
+              <p className="text-sm text-gray-500">
+                {new Date(post.created_at).toLocaleString()}
+              </p>
+            </div>
+          </div>
+          <p className="text-gray-800">{post.content}</p>
+        </div>
+      ))}
+    </div>
   );
 } 

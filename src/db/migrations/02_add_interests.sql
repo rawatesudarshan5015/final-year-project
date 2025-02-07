@@ -1,0 +1,2 @@
+ALTER TABLE students
+ADD COLUMN interests JSON DEFAULT NULL; 
