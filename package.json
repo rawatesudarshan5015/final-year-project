@@ -8,12 +8,24 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "migrate": "ts-node --project tsconfig.json src/scripts/run-migrations.ts"
+    "migrate": "ts-node -r tsconfig-paths/register --project tsconfig.json src/scripts/run-migrations.ts",
+    "test-mongo": "ts-node -r tsconfig-paths/register src/scripts/test-mongo.ts",
+    "init-db": "ts-node -r tsconfig-paths/register src/scripts/init-db.ts",
+    "test-mysql": "ts-node -r tsconfig-paths/register src/scripts/test-mysql.ts",
+    "migrate-mongo": "ts-node -r dotenv/config src/scripts/migrate-mongo-db.ts",
+    "build-migrate": "tsc src/scripts/migrate-mongo-db.ts --outDir dist/scripts && node -r dotenv/config dist/scripts/migrate-mongo-db.js",
+    "setup-mongodb": "ts-node src/scripts/setup-mongodb.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.744.0",
+    "@aws-sdk/s3-request-presigner": "^3.744.0",
     "@hookform/resolvers": "^3.3.4",
     "autoprefixer": "^10.4.17",
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.5.1",
+    "cookies-next": "^4.1.1",
+    "csv-parse": "^5.6.0",
+    "date-fns": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.13.0",
     "mysql2": "^3.12.0",
@@ -24,11 +36,14 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.50.0",
+    "react-intersection-observer": "^9.15.1",
     "tailwindcss": "^3.4.1",
+    "tsconfig-paths": "^4.2.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/csv-parse": "^1.1.12",
     "@types/dotenv": "^6.1.1",
     "@types/jsonwebtoken": "^9.0.8",
     "@types/mongodb": "^4.0.6",
@@ -38,7 +53,10 @@
     "@types/papaparse": "^5.3.15",
     "@types/react": "^18.2.52",
     "@types/react-dom": "^18.2.18",
+    "@types/uuid": "^10.0.0",
     "dotenv": "^16.4.7",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.3.3"
   }
 }

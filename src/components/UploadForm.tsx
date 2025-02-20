@@ -31,43 +31,15 @@ export function UploadForm() {
     setSuccess(null);
 
     try {
-      const results = await new Promise<StudentData[]>((resolve, reject) => {
-        Papa.parse(file, {
-          header: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            try {
-              const parsedData = results.data.map(row => studentSchema.parse(row));
-              resolve(parsedData);
-            } catch (e) {
-              reject(e);
-            }
-          },
-          error: (error) => reject(error),
-        });
-      });
+      const formData = new FormData();
+      formData.append('file', file);
 
-      const studentsWithPasswords = await Promise.all(
-        results.map(async (student) => {
-          const tempPassword = generateTempPassword();
-          const hashedPassword = await bcrypt.hash(tempPassword, 10);
-          
-          // TODO: Send email with credentials
-          console.log(`Would send email to ${student.email} with password: ${tempPassword}`);
-          
-          return {
-            ...student,
-            password: hashedPassword,
-          };
-        })
-      );
-
-      const response = await fetch('/api/students', {
+      const response = await fetch('/api/admin/upload', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
         },
-        body: JSON.stringify(studentsWithPasswords),
+        body: formData,
       });
 
       const data = await response.json();
@@ -76,7 +48,7 @@ export function UploadForm() {
         throw new Error(data.error || 'Failed to upload students');
       }
 
-      setSuccess(data.message);
+      setSuccess(`Successfully processed: ${data.message}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'An error occurred while processing the file');
     } finally {

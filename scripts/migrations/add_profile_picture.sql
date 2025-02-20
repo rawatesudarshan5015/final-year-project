@@ -1,0 +1,3 @@
+ALTER TABLE students 
+ADD COLUMN profile_pic_url VARCHAR(255) DEFAULT NULL,
+ADD COLUMN cloudinary_public_id VARCHAR(255) DEFAULT NULL; 

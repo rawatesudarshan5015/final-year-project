@@ -39,49 +39,42 @@ export function SearchPanel() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <label htmlFor="search" className="block text-sm font-medium text-gray-700">
-          Search Students
-        </label>
-        <div className="flex space-x-2">
-          <input
-            type="text"
-            id="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder="Enter name..."
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-          <button
-            onClick={handleSearch}
-            disabled={isSearching}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            {isSearching ? 'Searching...' : 'Search'}
-          </button>
-        </div>
+    <div className="bg-white p-4">
+      <h2 className="font-bold text-lg mt-2">Search Students</h2>
+      <div className="mt-3">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          placeholder="Search by name..."
+          className="w-full px-2 py-1 border border-gray-300"
+        />
+        <button
+          onClick={handleSearch}
+          disabled={isSearching}
+          className="w-full mt-2 px-4 py-1 bg-blue-600 text-white text-sm border border-blue-600"
+        >
+          {isSearching ? '...' : 'Search'}
+        </button>
       </div>
 
       {results.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium text-gray-700">Results</h3>
-          <div className="space-y-2">
-            {results.map((student) => (
-              <div
-                key={student.id}
-                onClick={() => router.push(`/student/${student.id}`)}
-                className="p-3 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer"
-              >
-                <h4 className="text-sm font-medium text-gray-900">{student.name}</h4>
-                <p className="text-xs text-gray-500">
-                  {student.branch} - {student.section}
-                </p>
-                <p className="text-xs text-gray-500">ERN: {student.ern_number}</p>
-              </div>
-            ))}
-          </div>
+        <div className="mt-4">
+          <p className="text-sm text-gray-600 mb-2">Results</p>
+          {results.map((student) => (
+            <div
+              key={student.id}
+              onClick={() => router.push(`/student/${student.id}`)}
+              className="py-2 border-b cursor-pointer hover:bg-gray-50"
+            >
+              <p className="text-sm">{student.name}</p>
+              <p className="text-xs text-gray-600">
+                {student.branch} - {student.section}
+              </p>
+              <p className="text-xs text-gray-500">ERN: {student.ern_number}</p>
+            </div>
+          ))}
         </div>
       )}
     </div>

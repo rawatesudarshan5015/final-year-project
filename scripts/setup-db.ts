@@ -34,6 +34,9 @@ async function setupMySQLDatabase() {
         mobile_number VARCHAR(15),
         password VARCHAR(255),
         first_login BOOLEAN DEFAULT TRUE,
+        interests JSON DEFAULT NULL,
+        profile_pic_url VARCHAR(255) DEFAULT NULL,
+        cloudinary_public_id VARCHAR(255) DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_email (email),
         INDEX idx_ern (ern_number)
@@ -60,6 +63,7 @@ async function setupMongoDB() {
     await db.createCollection('logs');
     await db.createCollection('upload_logs');
     await db.createCollection('email_logs');
+    await db.createCollection('interests');
 
     // Create indexes
     await Promise.all([
@@ -69,6 +73,57 @@ async function setupMongoDB() {
       db.collection('email_logs').createIndex({ studentEmail: 1 }),
       db.collection('email_logs').createIndex({ status: 1 })
     ]);
+
+    // Insert interests data if collection is empty
+    const interestsCount = await db.collection('interests').countDocuments();
+    if (interestsCount === 0) {
+      await db.collection('interests').insertMany([
+        {
+          category: 'sports',
+          options: [
+            'Cricket',
+            'Football',
+            'Basketball',
+            'Volleyball',
+            'Badminton',
+            'Table Tennis',
+            'Chess',
+            'Kabaddi'
+          ]
+        },
+        {
+          category: 'hobbies',
+          options: [
+            'Reading',
+            'Gaming',
+            'Music',
+            'Dancing',
+            'Photography',
+            'Painting',
+            'Writing',
+            'Cooking',
+            'Trekking'
+          ]
+        },
+        {
+          category: 'domain',
+          options: [
+            'Web Development',
+            'Mobile Apps',
+            'Cybersecurity',
+            'Cloud Computing',
+            'Data Science',
+            'Blockchain',
+            'IoT',
+            'Machine Learning',
+            'Artificial Intelligence',
+            'Data Analysis',
+            'Data Engineering',
+            'DevOps'
+          ]
+        }
+      ]);
+    }
 
     console.log('MongoDB setup completed successfully');
   } catch (error) {

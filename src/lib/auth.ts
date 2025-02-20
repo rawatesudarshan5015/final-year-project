@@ -25,4 +25,12 @@ export function generateToken(payload: { id: number; email: string }): string {
     throw new Error('JWT_SECRET is not defined');
   }
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
+}
+
+export function verifyAuth(request: Request): TokenPayload {
+  const token = request.headers.get('Authorization')?.split(' ')[1];
+  if (!token) {
+    throw new Error('Unauthorized');
+  }
+  return verifyToken(token);
 } 

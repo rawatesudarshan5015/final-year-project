@@ -32,4 +32,7 @@ export class DatabaseConnection {
   }
 }
 
-export const getDatabase = DatabaseConnection.getInstance; 
+export const getDatabase = DatabaseConnection.getInstance;
+
+export * from './mysql';
+export * from './mongodb'; 

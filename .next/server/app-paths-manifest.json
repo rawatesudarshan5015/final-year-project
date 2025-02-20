@@ -1,10 +1,8 @@
 {
-  "/page": "app/page.js",
-  "/admin/upload/page": "app/admin/upload/page.js",
-  "/change-password/page": "app/change-password/page.js",
   "/login/page": "app/login/page.js",
-  "/student/[id]/page": "app/student/[id]/page.js",
-  "/api/auth/login/route": "app/api/auth/login/route.js",
-  "/api/user/profile/route": "app/api/user/profile/route.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/api/upload/route": "app/api/upload/route.js",
+  "/(authenticated)/change-password/page": "app/(authenticated)/change-password/page.js",
+  "/admin/login/page": "app/admin/login/page.js",
+  "/(authenticated)/dashboard/posts/page": "app/(authenticated)/dashboard/posts/page.js",
+  "/(authenticated)/dashboard/posts/create/page": "app/(authenticated)/dashboard/posts/create/page.js"
 }

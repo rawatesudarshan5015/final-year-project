@@ -18,6 +18,15 @@ export async function sendLoginCredentials(
   tempPassword: string
 ) {
   try {
+    console.log('Attempting to send email to:', studentEmail);
+    console.log('SMTP Configuration:', {
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: process.env.SMTP_SECURE,
+      user: process.env.SMTP_USER,
+      // Don't log the actual password
+    });
+
     const info = await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to: studentEmail,
@@ -34,6 +43,8 @@ export async function sendLoginCredentials(
       `,
     });
 
+    console.log('Email sent successfully:', info.messageId);
+
     const db = await getDatabase();
     
     // Log successful email
@@ -46,6 +57,7 @@ export async function sendLoginCredentials(
 
     return true;
   } catch (error) {
+    console.error('Email sending failed:', error);
     const db = await getDatabase();
     
     // Log failed email

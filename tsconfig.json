@@ -30,8 +30,10 @@
     },
     "types": [
       "react",
-      "react-dom"
-    ]
+      "react-dom",
+      "node"
+    ],
+    "baseUrl": "./"
   },
   "ts-node": {
     "compilerOptions": {

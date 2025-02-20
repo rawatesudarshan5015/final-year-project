@@ -1,4 +1,4 @@
-// File: C:\Users\vaidi\Downloads\BE proj 5-2-25\project\src\app\api\auth\change-password\route.ts
+// File: E:\BE Project\BE-project ff\BE proj 5-2-25\project\src\app\api\auth\change-password\route.ts
 import * as entry from '../../../../../../src/app/api/auth/change-password/route.js'
 import type { NextRequest } from 'next/server.js'
 
