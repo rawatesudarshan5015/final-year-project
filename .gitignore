@@ -13,3 +13,14 @@ node_modules/
 # some_file.txt
 # another_folder/
 .next/
+
+# Ignore logs and debug files
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Ignore package-lock.json if you want consistency across different setups (optional)
+package-lock.json
+
+# Ignore VS Code settings (user-specific configurations)
+.vscode/
