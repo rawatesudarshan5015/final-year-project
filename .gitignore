@@ -12,3 +12,4 @@ node_modules/
 # Ignore any specific files you don't want to push
 # some_file.txt
 # another_folder/
+.next/
