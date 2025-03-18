@@ -24,3 +24,4 @@ package-lock.json
 
 # Ignore VS Code settings (user-specific configurations)
 .vscode/
+.next/cache/webpack/client-development/10.pack.gz
