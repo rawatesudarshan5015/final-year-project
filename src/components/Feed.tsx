@@ -1,94 +1,74 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { useInView } from 'react-intersection-observer';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Post } from '@/lib/db/types';
-import Link from 'next/link';
 import { PostCard } from './PostCard';
 
-export function Feed() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  
-  // Create ref for infinite scroll
-  const { ref, inView } = useInView({
-    threshold: 0,
-    rootMargin: '100px',
-  });
-  
-  const fetchPosts = async (pageNum: number) => {
+interface FeedProps {
+  initialPosts?: Post[];
+}
+
+export type FeedRef = {
+  refresh: () => Promise<void>;
+};
+
+export const Feed = forwardRef<FeedRef, FeedProps>(({ initialPosts }, ref) => {
+  const [posts, setPosts] = useState<Post[]>(initialPosts || []);
+  const [isLoading, setIsLoading] = useState(!initialPosts);
+
+  const fetchPosts = async () => {
+    setIsLoading(true);
     try {
-      console.log('[Feed] Fetching posts for page:', pageNum);
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/posts?page=${pageNum}&limit=10`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
+      const response = await fetch('/api/posts');
       const data = await response.json();
-      console.log('[Feed] Received response:', {
-        success: data.success,
-        posts_count: data.posts?.length,
-        hasMore: data.hasMore
-      });
-      
       if (data.success) {
-        setPosts(prev => pageNum === 1 ? data.posts : [...prev, ...data.posts]);
-        setHasMore(data.hasMore);
-      } else {
-        throw new Error(data.error);
+        setPosts(data.posts);
       }
-    } catch (err) {
-      console.error('[Feed] Error fetching posts:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load posts');
+    } catch (error) {
+      console.error('Error fetching posts:', error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  // Initial load
-  useEffect(() => {
-    fetchPosts(1);
-  }, []);
+  useImperativeHandle(ref, () => ({
+    refresh: fetchPosts
+  }));
 
-  // Load more when scrolled to bottom
   useEffect(() => {
-    if (inView && !loading && hasMore) {
-      setPage(prev => {
-        const nextPage = prev + 1;
-        fetchPosts(nextPage);
-        return nextPage;
-      });
+    if (!initialPosts) {
+      fetchPosts();
     }
-  }, [inView, loading, hasMore]);
+  }, [initialPosts]);
 
-  if (loading && posts.length === 0) {
-    return <div className="p-4">Loading posts...</div>;
+  if (isLoading) {
+    return (
+      <div className="py-3 flex justify-center">
+        <div className="animate-pulse flex space-x-4">
+          <div className="rounded-full bg-slate-200 h-10 w-10"></div>
+          <div className="flex-1 space-y-2 py-1">
+            <div className="h-2 bg-slate-200 rounded"></div>
+            <div className="h-2 bg-slate-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  if (error && posts.length === 0) {
-    return <div className="text-red-600 p-4">{error}</div>;
-  }
-
-  if (posts.length === 0) {
-    return <div className="p-4">No posts found</div>;
+  if (!posts.length) {
+    return (
+      <div className="py-3 text-center text-gray-500">
+        No posts yet. Be the first to post!
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {posts.map((post) => (
         <PostCard key={post._id?.toString()} post={post} />
       ))}
-      
-      {/* Loading indicator */}
-      <div ref={ref} className="w-full py-4 text-center">
-        {loading && hasMore && (
-          <div className="animate-pulse text-gray-500">Loading more posts...</div>
-        )}
-      </div>
     </div>
   );
-} 
+});
+
+Feed.displayName = 'Feed'; 
