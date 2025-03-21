@@ -1,27 +1,38 @@
-
-.next/node_modules/
-# Ignore node_modules
-node_modules/
-
-# Ignore environment variables
-.env.local
-
-# Ignore log files
-*.log
-
-# Ignore any specific files you don't want to push
-# some_file.txt
-# another_folder/
+# Build output
 .next/
 
-# Ignore logs and debug files
-npm-debug.log
-yarn-debug.log
-yarn-error.log
+# Dependencies
+node_modules/
 
-# Ignore package-lock.json if you want consistency across different setups (optional)
+# Environment variables
+.env.local
+.env*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Package manager
 package-lock.json
+yarn.lock
 
-# Ignore VS Code settings (user-specific configurations)
+# Editor settings
 .vscode/
-.next/cache/webpack/client-development/10.pack.gz
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Debug
+.pnpm-debug.log*
+
+# Testing
+/coverage
+
+# Local Netlify folder
+.netlify
