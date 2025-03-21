@@ -44,6 +44,7 @@ export async function initializeMysql() {
         password VARCHAR(255),
         first_login BOOLEAN DEFAULT TRUE,
         interests JSON DEFAULT NULL,
+        profile_pic_url TEXT DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_email (email),
         INDEX idx_ern (ern_number)

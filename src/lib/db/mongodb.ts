@@ -1,5 +1,5 @@
 import { MongoClient, ObjectId } from 'mongodb';
-import { MongoDBCollections, EmailLog, UploadLog, Post, Message, Interest } from './types';
+import { MongoDBCollections, EmailLog, UploadLog, Post, MongoMessage, MongoConversation, Interest } from './types';
 import { logger } from '../logger';
 import * as dotenv from 'dotenv';
 
@@ -33,7 +33,7 @@ export async function getMongoDb(): Promise<MongoDBCollections> {
     const db = client.db(dbName);
 
     // Create collections if they don't exist
-    const collections = ['logs', 'upload_logs', 'email_logs', 'posts', 'messages', 'interests'];
+    const collections = ['logs', 'upload_logs', 'email_logs', 'posts', 'messages', 'interests', 'conversations'];
     for (const collection of collections) {
       const exists = await db.listCollections({ name: collection }).hasNext();
       if (!exists) {
@@ -41,13 +41,24 @@ export async function getMongoDb(): Promise<MongoDBCollections> {
       }
     }
 
+    // Create indexes for messages and conversations
+    const messagesCollection = db.collection<MongoMessage>('messages');
+    await messagesCollection.createIndex({ conversation_id: 1, created_at: -1 });
+    await messagesCollection.createIndex({ sender_id: 1 });
+    
+    const conversationsCollection = db.collection<MongoConversation>('conversations');
+    await conversationsCollection.createIndex({ participants: 1 });
+    await conversationsCollection.createIndex({ updated_at: -1 });
+    await conversationsCollection.createIndex({ "participants": 1, "updated_at": -1 });
+
     return {
       logs: db.collection('logs'),
       uploadLogs: db.collection<UploadLog>('upload_logs'),
       emailLogs: db.collection<EmailLog>('email_logs'),
       posts: db.collection<Post>('posts'),
-      messages: db.collection<Message>('messages'),
-      interests: db.collection<Interest>('interests')
+      messages: db.collection<MongoMessage>('messages'),
+      interests: db.collection<Interest>('interests'),
+      conversations: db.collection<MongoConversation>('conversations')
     };
   } catch (error) {
     logger.error('MongoDB connection error:', error);
@@ -70,6 +81,29 @@ export async function getPostsCollection() {
   // Ensure indexes
   await collection.createIndex({ created_at: -1 });
   await collection.createIndex({ category: 1 });
+  
+  return collection;
+}
+
+export async function getMessagesCollection() {
+  const db = await connectToMongoDB();
+  const collection = db.collection<MongoMessage>('messages');
+  
+  // Ensure indexes
+  await collection.createIndex({ conversation_id: 1, created_at: -1 });
+  await collection.createIndex({ sender_id: 1 });
+  
+  return collection;
+}
+
+export async function getConversationsCollection() {
+  const db = await connectToMongoDB();
+  const collection = db.collection<MongoConversation>('conversations');
+  
+  // Ensure indexes
+  await collection.createIndex({ participants: 1 });
+  await collection.createIndex({ updated_at: -1 });
+  await collection.createIndex({ "participants": 1, "updated_at": -1 });
   
   return collection;
 }
