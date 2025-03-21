@@ -3,6 +3,7 @@ import { getPostsCollection } from '@/lib/db/mongodb';
 import { verifyToken } from '@/lib/auth';
 import { getDatabase } from '@/lib/db';
 import { RowDataPacket } from 'mysql2';
+import { getStudentRole } from '@/lib/utils';
 
 export async function GET(request: Request) {
   try {
@@ -27,20 +28,49 @@ export async function GET(request: Request) {
         return NextResponse.json({ success: true, posts: [] });
       }
 
-      const [authors] = await connection.execute<RowDataPacket[]>(
-        'SELECT id, name, profile_pic_url FROM students WHERE id = ?',
-        [user.id]
+      // Check if the new columns exist
+      const [columns] = await connection.execute<RowDataPacket[]>(
+        "SHOW COLUMNS FROM students LIKE 'current_internship'"
       );
+      
+      const hasNewColumns = columns.length > 0;
+      
+      // Construct the query based on whether the new columns exist
+      let query = `SELECT id, name, profile_pic_url, batch_year`;
+      
+      if (hasNewColumns) {
+        query += `, COALESCE(current_internship, "null") as current_internship, 
+                   COALESCE(work_history, "[]") as work_history`;
+      }
+      
+      query += ` FROM students WHERE id = ?`;
+
+      const [authors] = await connection.execute<RowDataPacket[]>(query, [user.id]);
 
       console.log('[GET /api/posts/user] Found author:', authors[0]);
 
+      const authorData = authors[0];
+      const role = authorData ? getStudentRole(authorData.batch_year) : undefined;
+      
+      const author: any = authorData ? {
+        id: authorData.id,
+        name: authorData.name,
+        profile_pic_url: authorData.profile_pic_url || null,
+        role
+      } : undefined;
+      
+      if (hasNewColumns && authorData) {
+        author.current_internship = authorData.current_internship && authorData.current_internship !== 'null'
+          ? JSON.parse(authorData.current_internship)
+          : null;
+        author.work_history = authorData.work_history
+          ? JSON.parse(authorData.work_history)
+          : [];
+      }
+
       const postsWithAuthor = posts.map(post => ({
         ...post,
-        author: authors[0] ? {
-          id: authors[0].id,
-          name: authors[0].name,
-          profile_pic_url: authors[0].profile_pic_url || null
-        } : undefined
+        author
       }));
 
       console.log('[GET /api/posts/user] First post sample:', {
