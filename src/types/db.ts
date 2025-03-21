@@ -1,10 +1,12 @@
 export interface Message {
   id: number;
+  _id?: string | any; // MongoDB ObjectId
   conversation_id: number;
   sender_id: number;
   content: string;
   created_at: Date;
   sender_name?: string;
+  read_by?: number[]; // Array of user IDs who have read the message
 }
 
 export interface Conversation {

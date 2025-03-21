@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserAvatar } from '@/components/UserAvatar';
+import { CompanyInfoForm } from '@/components/CompanyInfoForm';
+import { StudentRole } from '@/lib/utils';
+import { CompanyExperience } from '@/lib/db/types';
 
 interface Interest {
   _id?: string;
@@ -23,6 +26,14 @@ interface Profile {
   interests: {
     [key: string]: string[];
   };
+  role?: StudentRole;
+  current_internship?: {
+    company_name: string;
+    position: string;
+    start_date: string;
+    description?: string;
+  } | null;
+  work_history?: CompanyExperience[];
 }
 
 export default function EditProfilePage() {
@@ -138,7 +149,9 @@ export default function EditProfilePage() {
         },
         body: JSON.stringify({
           mobile_number: profile?.mobile_number,
-          interests: profile?.interests
+          interests: profile?.interests,
+          current_internship: profile?.current_internship,
+          work_history: profile?.work_history
         }),
       });
 
@@ -231,6 +244,21 @@ export default function EditProfilePage() {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
+
+            {/* Company Information Section */}
+            {profile?.role && (profile.role === 'TE' || profile.role === 'BE' || profile.role === 'Alumni') && (
+              <CompanyInfoForm
+                role={profile.role}
+                currentInternship={profile.current_internship || null}
+                workHistory={Array.isArray(profile.work_history) ? profile.work_history : []}
+                onInternshipChange={(internship) => 
+                  setProfile(prev => prev ? {...prev, current_internship: internship} : null)
+                }
+                onWorkHistoryChange={(history) => 
+                  setProfile(prev => prev ? {...prev, work_history: history} : null)
+                }
+              />
+            )}
 
             {/* Interests Section */}
             <div className="space-y-4">

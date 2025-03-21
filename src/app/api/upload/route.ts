@@ -111,7 +111,7 @@ export async function POST(request: Request) {
     }
 
     // Validate upload type value
-    if (!['profile', 'post'].includes(uploadType)) {
+    if (!['profile', 'post', 'resume'].includes(uploadType)) {
       console.log('Invalid upload type:', uploadType);
       return NextResponse.json(
         { success: false, error: `Invalid upload type: ${uploadType}` },

@@ -1,8 +1,22 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Profile, Interest } from '@/types/db';
-import { ProfileAvatar } from './ProfileAvatar';
+import { Profile as BaseProfile, Interest } from '@/types/db';
+import { ProfileDisplay } from './ProfileDisplay';
+import { StudentRole } from '@/lib/utils';
+import { CompanyExperience } from '@/lib/db/types';
+
+// Extend the Profile type to include the role property and company information
+interface Profile extends BaseProfile {
+  role?: StudentRole;
+  current_internship?: {
+    company_name: string;
+    position: string;
+    start_date: string;
+    description?: string;
+  } | null;
+  work_history?: CompanyExperience[];
+}
 
 export function ProfilePanel() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -32,7 +46,14 @@ export function ProfilePanel() {
         const interestsData = await interestsRes.json();
 
         if (profileData.success) {
-          setProfile(profileData.profile);
+          // Ensure the profile data has the expected structure
+          const profile = {
+            ...profileData.profile,
+            interests: profileData.profile.interests || {},
+            current_internship: profileData.profile.current_internship || null,
+            work_history: Array.isArray(profileData.profile.work_history) ? profileData.profile.work_history : []
+          };
+          setProfile(profile);
         }
 
         if (interestsData.success) {
@@ -75,72 +96,7 @@ export function ProfilePanel() {
       </div>
 
       {profile && (
-        <div className="space-y-6">
-          {/* Profile Photo */}
-          <div className="flex justify-center">
-            <ProfileAvatar
-              imageUrl={profile.profile_pic_url}
-              name={profile.name}
-              size="lg"
-              className="border-2 border-gray-200"
-            />
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Name</h3>
-              <p className="mt-1 text-base text-gray-900">{profile.name}</p>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Email</h3>
-              <p className="mt-1 text-base text-gray-900 break-all">{profile.email}</p>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">ERN Number</h3>
-              <p className="mt-1 text-base text-gray-900">{profile.ern_number}</p>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Mobile Number</h3>
-              <p className="mt-1 text-base text-gray-900">{profile.mobile_number || 'Not provided'}</p>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Branch</h3>
-              <p className="mt-1 text-base text-gray-900">{profile.branch}</p>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Batch Year</h3>
-              <p className="mt-1 text-base text-gray-900">{profile.batch_year}</p>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Interests</h3>
-              <div className="space-y-3">
-                {Object.entries(profile.interests || {}).map(([category, items]) => (
-                  <div key={category}>
-                    <h4 className="text-sm font-medium text-gray-700 capitalize mb-1">
-                      {category}
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {items.map((item) => (
-                        <span
-                          key={item}
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                        >
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProfileDisplay profile={profile} variant="full" showEmail={true} showInterests={true} showCompanyInfo={true} />
       )}
     </div>
   );

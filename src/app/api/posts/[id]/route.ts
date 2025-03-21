@@ -6,6 +6,7 @@ import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { s3Client } from '@/lib/aws/s3';
 import { getDatabase } from '@/lib/db';
 import { RowDataPacket } from 'mysql2';
+import { getStudentRole } from '@/lib/utils';
 
 export async function GET(
   request: Request,
@@ -32,18 +33,47 @@ export async function GET(
     const db = await getDatabase();
     const connection = await db.mysql.getConnection();
     try {
-      const [authors] = await connection.execute<RowDataPacket[]>(
-        'SELECT id, name, profile_pic_url FROM students WHERE id = ?',
-        [post.author_id]
+      // Check if the new columns exist
+      const [columns] = await connection.execute<RowDataPacket[]>(
+        "SHOW COLUMNS FROM students LIKE 'current_internship'"
       );
+      
+      const hasNewColumns = columns.length > 0;
+      
+      // Construct the query based on whether the new columns exist
+      let query = `SELECT id, name, profile_pic_url, batch_year`;
+      
+      if (hasNewColumns) {
+        query += `, COALESCE(current_internship, "null") as current_internship, 
+                   COALESCE(work_history, "[]") as work_history`;
+      }
+      
+      query += ` FROM students WHERE id = ?`;
+
+      const [authors] = await connection.execute<RowDataPacket[]>(query, [post.author_id]);
+
+      const authorData = authors[0];
+      const role = authorData ? getStudentRole(authorData.batch_year) : undefined;
+      
+      const author: any = authorData ? {
+        id: authorData.id,
+        name: authorData.name,
+        profile_pic_url: authorData.profile_pic_url || null,
+        role
+      } : undefined;
+      
+      if (hasNewColumns && authorData) {
+        author.current_internship = authorData.current_internship && authorData.current_internship !== 'null'
+          ? JSON.parse(authorData.current_internship)
+          : null;
+        author.work_history = authorData.work_history
+          ? JSON.parse(authorData.work_history)
+          : [];
+      }
 
       const postWithAuthor = {
         ...post,
-        author: authors[0] ? {
-          id: authors[0].id,
-          name: authors[0].name,
-          profile_pic_url: authors[0].profile_pic_url || null
-        } : undefined
+        author
       };
 
       console.log('[GET /api/posts/[id]] Returning post with author:', {

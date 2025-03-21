@@ -4,6 +4,7 @@ import { verifyToken } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
 import { getDatabase } from '@/lib/db';
 import { RowDataPacket } from 'mysql2';
+import { getStudentRole } from '@/lib/utils';
 
 export async function POST(request: Request) {
   try {
@@ -18,6 +19,42 @@ export async function POST(request: Request) {
     // Validate required fields based on category
     if (!description) {
       return NextResponse.json({ error: 'Description is required' }, { status: 400 });
+    }
+
+    // Check if user is alumni for alumni_referral posts
+    if (category === 'alumni_referral') {
+      // Get user details from database to check role
+      const db = await getDatabase();
+      const connection = await db.mysql.getConnection();
+      
+      try {
+        const [rows] = await connection.execute<RowDataPacket[]>(
+          'SELECT batch_year FROM students WHERE id = ?',
+          [user.id]
+        );
+        
+        if (rows.length === 0) {
+          return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
+        
+        const userRole = getStudentRole(rows[0].batch_year);
+        
+        if (userRole !== 'Alumni') {
+          return NextResponse.json({ 
+            success: false, 
+            error: 'Only alumni can create referral posts' 
+          }, { status: 403 });
+        }
+        
+        // Validate required fields for alumni_referral
+        if (!details?.company_name || !details?.position || !details?.referral_type) {
+          return NextResponse.json({ 
+            error: 'Missing required fields for referral post: company name, position, and referral type are required' 
+          }, { status: 400 });
+        }
+      } finally {
+        connection.release();
+      }
     }
 
     if (category === 'event') {
@@ -60,17 +97,24 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
+    const category = searchParams.get('category');
     const skip = (page - 1) * limit;
 
-    console.log('[GET /api/posts] Fetching posts with params:', { page, limit, skip });
+    console.log('[GET /api/posts] Fetching posts with params:', { page, limit, skip, category });
 
     const collection = await getPostsCollection();
     
+    // Build query filter
+    const filter: any = {};
+    if (category) {
+      filter.category = category;
+    }
+    
     // Get total count for pagination
-    const total = await collection.countDocuments();
+    const total = await collection.countDocuments(filter);
     
     const posts = await collection
-      .find()
+      .find(filter)
       .sort({ created_at: -1 })
       .skip(skip)
       .limit(limit)
@@ -94,22 +138,54 @@ export async function GET(request: Request) {
         });
       }
 
-      const placeholders = authorIds.map(() => '?').join(',');
-      const [authors] = await connection.execute<RowDataPacket[]>(
-        `SELECT id, name, profile_pic_url FROM students WHERE id IN (${placeholders})`,
-        authorIds
+      // Check if the new columns exist
+      const [columns] = await connection.execute<RowDataPacket[]>(
+        "SHOW COLUMNS FROM students LIKE 'current_internship'"
       );
+      
+      const hasNewColumns = columns.length > 0;
+      
+      // Construct the query based on whether the new columns exist
+      let query = `SELECT id, name, profile_pic_url, batch_year`;
+      
+      if (hasNewColumns) {
+        query += `, COALESCE(current_internship, "null") as current_internship, 
+                   COALESCE(work_history, "[]") as work_history`;
+      }
+      
+      query += ` FROM students WHERE id IN (${authorIds.map(() => '?').join(',')})`;
 
-      const authorMap = new Map(authors.map(author => [author.id, author]));
+      const [authors] = await connection.execute<RowDataPacket[]>(query, authorIds);
 
-      const postsWithAuthors = posts.map(post => ({
-        ...post,
-        author: authorMap.get(post.author_id) ? {
-          id: authorMap.get(post.author_id)!.id,
-          name: authorMap.get(post.author_id)!.name,
-          profile_pic_url: authorMap.get(post.author_id)!.profile_pic_url || null
-        } : undefined
+      const authorMap = new Map(authors.map(author => {
+        const role = getStudentRole(author.batch_year);
+        const authorData: any = {
+          id: author.id,
+          name: author.name,
+          profile_pic_url: author.profile_pic_url || null,
+          role
+        };
+        
+        if (hasNewColumns) {
+          authorData.current_internship = author.current_internship && author.current_internship !== 'null'
+            ? JSON.parse(author.current_internship)
+            : null;
+          authorData.work_history = author.work_history
+            ? JSON.parse(author.work_history)
+            : [];
+        }
+        
+        return [author.id, authorData];
       }));
+
+      const postsWithAuthors = posts.map(post => {
+        const authorData = authorMap.get(post.author_id);
+        
+        return {
+          ...post,
+          author: authorData
+        };
+      });
 
       return NextResponse.json({ 
         success: true, 

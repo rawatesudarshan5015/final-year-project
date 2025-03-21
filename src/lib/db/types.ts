@@ -1,4 +1,5 @@
 import { Collection, Document, ObjectId } from 'mongodb';
+import { StudentRole } from '../utils';
 
 export interface EmailLog {
   studentEmail: string;
@@ -41,6 +42,14 @@ export interface Post {
     id: number;
     name: string;
     profile_pic_url?: string;
+    role?: StudentRole;
+    current_internship?: {
+      company_name: string;
+      position: string;
+      start_date: string;
+      description?: string;
+    } | null;
+    work_history?: CompanyExperience[];
   };
   details?: {
     event_name?: string;
@@ -48,6 +57,17 @@ export interface Post {
     venue?: string;
     date?: string;
     time?: string;
+    // Alumni referral specific fields
+    referral_type?: 'direct_referral' | 'job_opening' | 'startup_hiring';
+    company_name?: string;
+    position?: string;
+    job_type?: 'full_time' | 'internship' | 'contract';
+    experience_required?: string;
+    skills_required?: string[];
+    application_deadline?: string;
+    application_link?: string;
+    salary_range?: string;
+    is_remote?: boolean;
     [key: string]: any;
   };
 }
@@ -68,6 +88,43 @@ export interface Conversation {
   participant_ids: string;
 }
 
+// MongoDB Message Schema
+export interface MongoMessage {
+  _id?: string | ObjectId;
+  conversation_id: ObjectId;
+  sender_id: number;  // MySQL student ID
+  content: string;
+  created_at: Date;
+  read_by: number[];  // Array of user IDs who have read the message
+  sender_name?: string; // Cached sender name for quick display
+}
+
+// MongoDB Conversation Schema
+export interface MongoConversation {
+  _id?: string | ObjectId;
+  participants: number[];  // Array of MySQL student IDs
+  participant_details?: Array<{
+    id: number;
+    name: string;
+  }>;
+  last_message?: {
+    content: string;
+    sender_id: number;
+    created_at: Date;
+  };
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface CompanyExperience {
+  company_name: string;
+  position: string;
+  start_date: string; // ISO format date string
+  end_date?: string; // ISO format date string, undefined means current
+  is_current: boolean;
+  description?: string;
+}
+
 export interface Profile {
   id: number;
   name: string;
@@ -82,6 +139,15 @@ export interface Profile {
   interests?: {
     [key: string]: string[];
   };
+  role?: StudentRole;
+  // New fields for company information
+  current_internship?: {
+    company_name: string;
+    position: string;
+    start_date: string;
+    description?: string;
+  };
+  work_history?: CompanyExperience[];
 }
 
 export interface Interest {
@@ -99,6 +165,15 @@ export interface StudentProfile {
   batch_year: number;
   section: string;
   mobile_number?: string;
+  role?: StudentRole;
+  // New fields for company information
+  current_internship?: {
+    company_name: string;
+    position: string;
+    start_date: string;
+    description?: string;
+  };
+  work_history?: CompanyExperience[];
 }
 
 export interface User {
@@ -108,13 +183,35 @@ export interface User {
   profile_image: string | null;
 }
 
+export interface ReferralRequest {
+  id: number;
+  student_id: number;
+  alumni_id: number;
+  post_id: string;
+  message: string;
+  resume_url?: string;
+  status: 'pending' | 'accepted' | 'declined';
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface Company {
+  id: number;
+  name: string;
+  industry?: string;
+  website?: string;
+  logo_url?: string;
+  created_at: string;
+}
+
 export interface MongoDBCollections {
   logs: Collection<Document>;
   uploadLogs: Collection<UploadLog>;
   emailLogs: Collection<EmailLog>;
   posts: Collection<Post>;
-  messages: Collection<Message>;
+  messages: Collection<MongoMessage>;
   interests: Collection<Interest>;
+  conversations: Collection<MongoConversation>;
 }
 
 export type PostCategory = 'announcement' | 'achievement' | 'event' | 'contest' | 'alumni_referral'; 
