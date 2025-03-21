@@ -1,8 +1,0 @@
-{
-  "/login/page": "app/login/page.js",
-  "/api/upload/route": "app/api/upload/route.js",
-  "/(authenticated)/change-password/page": "app/(authenticated)/change-password/page.js",
-  "/admin/login/page": "app/admin/login/page.js",
-  "/(authenticated)/dashboard/posts/page": "app/(authenticated)/dashboard/posts/page.js",
-  "/(authenticated)/dashboard/posts/create/page": "app/(authenticated)/dashboard/posts/create/page.js"
-}
