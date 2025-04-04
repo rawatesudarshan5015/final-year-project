@@ -29,6 +29,7 @@ interface Conversation {
     sender_id: number;
     created_at: string;
   };
+  unread_count?: number;
 }
 
 export function SearchPanel() {
@@ -217,11 +218,18 @@ export function SearchPanel() {
                     )}
                   </div>
                 </div>
-                {conversation.updated_at && (
-                  <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                    {formatDate(conversation.updated_at)}
-                  </span>
-                )}
+                <div className="flex flex-col items-end">
+                  {conversation.updated_at && (
+                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                      {formatDate(conversation.updated_at)}
+                    </span>
+                  )}
+                  {conversation.unread_count && conversation.unread_count > 0 && (
+                    <span className="mt-1 inline-flex items-center justify-center h-5 w-5 text-xs font-medium text-white bg-blue-600 rounded-full">
+                      {conversation.unread_count}
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>

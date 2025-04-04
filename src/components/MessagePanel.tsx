@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Message } from '@/types/db';
 import { UserAvatar } from './UserAvatar';
 import { formatDistanceToNow } from 'date-fns';
+import { CheckIcon } from '@heroicons/react/24/outline';
 
 interface Props {
   recipientId: number;
@@ -354,11 +355,24 @@ export function MessagePanel({ recipientId, recipientName, recipientImageUrl }: 
                           }`}
                         >
                           <p className="whitespace-pre-wrap break-words text-sm">{message.content}</p>
-                          <p className={`text-xs mt-0.5 text-right ${
+                          <div className={`text-xs mt-0.5 flex items-center justify-end ${
                             isSender ? 'text-blue-100' : 'text-gray-500'
                           }`}>
-                            {formatMessageTime(message.created_at)}
-                          </p>
+                            <span>{formatMessageTime(message.created_at)}</span>
+                            {/* Read receipt indicator for sent messages */}
+                            {isSender && message.read_by && (
+                              <span className="ml-1 flex items-center">
+                                {message.read_by.includes(recipientId) ? (
+                                  <span className="inline-flex items-center text-xs">
+                                    <CheckIcon className="h-3 w-3 ml-0.5" />
+                                    <CheckIcon className="h-3 w-3 -ml-1.5" />
+                                  </span>
+                                ) : (
+                                  <CheckIcon className="h-3 w-3" />
+                                )}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         
                         {/* Avatar - only show for first message in sequence from sender */}
