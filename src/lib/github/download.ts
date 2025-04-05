@@ -51,7 +51,7 @@ export const getDirectoryContents = async (
       throw new Error('GitHub configuration is missing or invalid');
     }
     
-    const repo = getRepositoryForBranch(config, branch);
+    const repo = getRepositoryForBranch(branch);
     const path = pathParts.join('/');
     
     const url = `https://api.github.com/repos/${config.username}/${repo}/contents/${path}`;

@@ -10,14 +10,28 @@ const {
   MYSQL_HOST = 'localhost',
   MYSQL_USER,
   MYSQL_PASSWORD,
-  MYSQL_DATABASE
+  MYSQL_DATABASE,
+  MYSQL_PORT,
+  MYSQL_SOCKET_PATH,
+  MYSQL_SSL
 } = process.env;
 
 if (!MYSQL_USER || !MYSQL_PASSWORD || !MYSQL_DATABASE) {
   throw new Error('Missing required MySQL environment variables');
 }
 
-export const mysqlPool = createPool({
+// Parse SSL config if provided
+let sslConfig = undefined;
+if (MYSQL_SSL) {
+  try {
+    sslConfig = JSON.parse(MYSQL_SSL);
+  } catch (error) {
+    console.error('Error parsing MYSQL_SSL config:', error);
+  }
+}
+
+// Create connection config
+const connectionConfig: any = {
   host: MYSQL_HOST,
   user: MYSQL_USER,
   password: MYSQL_PASSWORD,
@@ -25,7 +39,25 @@ export const mysqlPool = createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
-});
+};
+
+// Add port if specified
+if (MYSQL_PORT) {
+  connectionConfig.port = parseInt(MYSQL_PORT, 10);
+}
+
+// Add socket path if specified (for Google Cloud SQL socket connections)
+if (MYSQL_SOCKET_PATH) {
+  connectionConfig.socketPath = MYSQL_SOCKET_PATH;
+}
+
+// Add SSL if specified
+if (sslConfig) {
+  connectionConfig.ssl = sslConfig;
+}
+
+// Create the connection pool
+export const mysqlPool = createPool(connectionConfig);
 
 export async function initializeMysql() {
   const connection = await mysqlPool.getConnection();

@@ -91,7 +91,7 @@ export interface Conversation {
 // MongoDB Message Schema
 export interface MongoMessage {
   _id?: string | ObjectId;
-  conversation_id: ObjectId;
+  conversation_id: string | ObjectId;
   sender_id: number;  // MySQL student ID
   content: string;
   created_at: Date;

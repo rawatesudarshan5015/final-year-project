@@ -23,11 +23,12 @@ export async function getMongoDb(): Promise<MongoDBCollections> {
 
     if (!client) {
       client = new MongoClient(mongoUri, {
-        connectTimeoutMS: 5000,
-        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 10000, // Increased timeout for Atlas connections
+        serverSelectionTimeoutMS: 10000,
+        maxPoolSize: 10, // Recommended for Atlas connections
       });
       await client.connect();
-      logger.info('Connected to MongoDB');
+      logger.info('Connected to MongoDB Atlas');
     }
 
     const db = client.db(dbName);
@@ -71,7 +72,7 @@ export async function connectToMongoDB() {
     client = new MongoClient(process.env.MONGODB_URI!);
     await client.connect();
   }
-  return client.db(process.env.MONGODB_DB_NAME);
+  return client.db(process.env.MONGODB_DB);
 }
 
 export async function getPostsCollection() {
