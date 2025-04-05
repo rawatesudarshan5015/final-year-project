@@ -29,6 +29,7 @@ export interface Post {
   description: string;
   media_url?: string;
   media_type?: 'photo' | 'video';
+  cloudinary_public_id?: string;
   created_at: string;
   // Event specific fields
   event_date?: string;
