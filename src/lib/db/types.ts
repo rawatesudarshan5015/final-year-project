@@ -29,6 +29,7 @@ export interface Post {
   description: string;
   media_url?: string;
   media_type?: 'photo' | 'video';
+  cloudinary_public_id?: string;
   created_at: string;
   // Event specific fields
   event_date?: string;
@@ -91,7 +92,7 @@ export interface Conversation {
 // MongoDB Message Schema
 export interface MongoMessage {
   _id?: string | ObjectId;
-  conversation_id: ObjectId;
+  conversation_id: string | ObjectId;
   sender_id: number;  // MySQL student ID
   content: string;
   created_at: Date;

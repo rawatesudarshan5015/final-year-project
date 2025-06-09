@@ -2,8 +2,9 @@ import { getDatabase } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
-import { getConversationsCollection } from '@/lib/db/mongodb';
+import { getConversationsCollection, getMessagesCollection } from '@/lib/db/mongodb';
 import { MongoConversation } from '@/lib/db/types';
+import { ObjectId } from 'mongodb';
 
 export async function POST(request: Request) {
   try {
@@ -96,6 +97,7 @@ export async function GET(request: Request) {
     
     // Get MongoDB collections
     const conversationsCollection = await getConversationsCollection();
+    const messagesCollection = await getMessagesCollection();
     
     // Find all conversations where the user is a participant
     const conversations = await conversationsCollection
@@ -103,21 +105,31 @@ export async function GET(request: Request) {
       .sort({ updated_at: -1 })
       .toArray();
     
-    // Format the response
-    const formattedConversations = conversations.map(conv => ({
-      _id: conv._id,
-      id: conv._id, // For backward compatibility
-      created_at: conv.created_at,
-      updated_at: conv.updated_at,
-      participants: conv.participants,
-      participant_names: conv.participant_details
-        ?.filter(p => p.id !== user.id)
-        .map(p => p.name)
-        .join(', '),
-      participant_ids: conv.participants
-        .filter(id => id !== user.id)
-        .join(','),
-      last_message: conv.last_message
+    // Format the response with unread messages count
+    const formattedConversations = await Promise.all(conversations.map(async conv => {
+      // Count unread messages for this conversation
+      const unreadCount = await messagesCollection.countDocuments({
+        conversation_id: new ObjectId(conv._id),
+        sender_id: { $ne: user.id }, // Not sent by the current user
+        read_by: { $nin: [user.id] } // Not read by the current user
+      });
+      
+      return {
+        _id: conv._id,
+        id: conv._id, // For backward compatibility
+        created_at: conv.created_at,
+        updated_at: conv.updated_at,
+        participants: conv.participants,
+        participant_names: conv.participant_details
+          ?.filter(p => p.id !== user.id)
+          .map(p => p.name)
+          .join(', '),
+        participant_ids: conv.participants
+          .filter(id => id !== user.id)
+          .join(','),
+        last_message: conv.last_message,
+        unread_count: unreadCount // Add unread count
+      };
     }));
     
     return NextResponse.json({ success: true, conversations: formattedConversations });

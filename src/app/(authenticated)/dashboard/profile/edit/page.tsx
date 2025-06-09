@@ -2,8 +2,24 @@
 import { useEffect, useState } from 'react';
 import { ProfileEditor } from '@/components/ProfileEditor';
 
+// Define the Profile interface to match the one in ProfileEditor
+interface Profile {
+  id: number;
+  name: string;
+  email: string;
+  ern_number: string;
+  branch: string;
+  batch_year: number;
+  section: string;
+  mobile_number: string | null;
+  profile_pic_url?: string;
+  interests: {
+    [key: string]: string[];
+  };
+}
+
 export default function EditProfilePage() {
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +51,7 @@ export default function EditProfilePage() {
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
+  if (!profile) return <div className="text-red-600">Profile not found</div>;
 
   return <ProfileEditor initialData={profile} />;
 } 

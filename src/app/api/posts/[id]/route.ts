@@ -2,11 +2,10 @@ import { NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import { getPostsCollection } from '@/lib/db/mongodb';
 import { verifyToken } from '@/lib/auth';
-import { DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { s3Client } from '@/lib/aws/s3';
 import { getDatabase } from '@/lib/db';
 import { RowDataPacket } from 'mysql2';
 import { getStudentRole } from '@/lib/utils';
+import { deleteFromCloudinary } from '@/lib/cloudinary';
 
 export async function GET(
   request: Request,
@@ -106,7 +105,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    console.log('Verifying token with secret:', process.env.JWT_SECRET);
     const user = verifyToken(token);
+    console.log('Decoded token:', user);
+    
     const collection = await getPostsCollection();
     
     // Check if post exists and belongs to user
@@ -121,13 +123,45 @@ export async function DELETE(
 
     // Delete associated media if exists
     if (post.media_url) {
-      // Delete from S3
-      const key = post.media_url.split('/').pop();
-      const command = new DeleteObjectCommand({
-        Bucket: process.env.AWS_S3_BUCKET!,
-        Key: `uploads/${key}`
-      });
-      await s3Client.send(command);
+      try {
+        let publicId = post.cloudinary_public_id;
+        
+        // If there's no cloudinary_public_id but there is a media_url, try to extract it from the URL
+        if (!publicId && post.media_url.includes('cloudinary.com')) {
+          // Extract the public ID from Cloudinary URL
+          // Format is typically: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/folder/public_id.ext
+          const urlParts = post.media_url.split('/');
+          const fileNameWithExt = urlParts[urlParts.length - 1];
+          const fileName = fileNameWithExt.split('.')[0]; // Remove extension
+          
+          // Find the upload part index
+          const uploadIndex = urlParts.findIndex(part => part === 'upload');
+          if (uploadIndex !== -1 && uploadIndex < urlParts.length - 2) {
+            // Everything after 'upload' is part of the public ID
+            publicId = urlParts.slice(uploadIndex + 1).join('/');
+            // Remove any version number (v1234567890)
+            if (publicId.startsWith('v') && /^v\d+/.test(publicId.split('/')[0])) {
+              publicId = publicId.split('/').slice(1).join('/');
+            }
+            
+            // Remove file extension if present
+            if (publicId.includes('.')) {
+              publicId = publicId.substring(0, publicId.lastIndexOf('.'));
+            }
+          }
+        }
+        
+        if (publicId) {
+          // Delete from Cloudinary using the public_id
+          await deleteFromCloudinary(publicId);
+          console.log('Successfully deleted media from Cloudinary');
+        } else {
+          console.log('Could not determine Cloudinary public_id, skipping media deletion');
+        }
+      } catch (mediaError) {
+        // Log media deletion error but continue with post deletion
+        console.error('Failed to delete media from Cloudinary, continuing with post deletion:', mediaError);
+      }
     }
 
     // Delete post

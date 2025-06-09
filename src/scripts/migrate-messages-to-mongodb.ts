@@ -51,7 +51,7 @@ async function migrateMessagesToMongoDB() {
     console.log(`Found ${mysqlConversations.length} conversations in MySQL`);
     
     // Step 2: Create a mapping from MySQL conversation IDs to MongoDB ObjectIds
-    const conversationIdMap = new Map<number, ObjectId>();
+    const conversationIdMap = new Map<number, string | ObjectId>();
     const mongoConversationsCollection = await getConversationsCollection();
     
     // Step 3: Insert conversations into MongoDB

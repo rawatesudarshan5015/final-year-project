@@ -100,7 +100,7 @@ export async function GET(request: Request) {
         // Get requests received by the current user (as alumni)
         query = `
           SELECT r.*, s.name as student_name, s.profile_pic_url as student_profile_pic,
-                 s.batch_year, s.branch, s.section
+                 s.batch_year as student_batch_year, s.branch as student_branch, s.section as student_section
           FROM referral_requests r
           JOIN students s ON r.student_id = s.id
           WHERE r.alumni_id = ?
